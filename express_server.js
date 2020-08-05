@@ -13,6 +13,14 @@ function generateRandomString() {
   return Math.random().toString(36).substr(2, 6);
 }
 
+function emailExists(req){
+  for(let user in users){
+    if(users[user].email === req.body.email){
+      return true;
+    }
+  }
+}
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -71,14 +79,22 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   let userID = generateRandomString();
+  if(!req.body.email || !req.body.password){
+    res.send("Error: 400");
+  }else if(emailExists(req)){
+    console.log(users);
+    res.send("Error: 400");
+  }else{
+  
   users[userID] = {
     id: userID,
     email: req.body.email,
     password: req.body.password
   };
-  // console.log(userID, users);
+  console.log(userID, users);
   res.cookie("user_id", userID);
   res.redirect("/urls");
+}
 });
 
 app.post("/login", (req, res) => {
