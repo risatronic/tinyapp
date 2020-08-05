@@ -49,6 +49,10 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+app.get("/register", (req, res) => {
+  res.render("urls_register");
+});
+
 app.post("/login", (req, res) => {
   res.cookie("username", req.body.username);
   res.redirect("/urls");
