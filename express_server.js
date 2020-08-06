@@ -1,4 +1,5 @@
-const alert = require("alert");
+// const alert = require("alert");
+const bcrypt = require('bcrypt');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const express = require("express");
@@ -46,12 +47,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple"
+    password: bcrypt.hashSync("purple", 10)
   },
   "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 };
 
@@ -123,7 +124,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  let userID = generateRandomString();
+  const userID = generateRandomString();
   if (!req.body.email || !req.body.password) {
     res.send("Error 400: Email and password fields cannot be empty");
   } else if (emailExists(req)) {
@@ -132,7 +133,7 @@ app.post("/register", (req, res) => {
     users[userID] = {
       id: userID,
       email: req.body.email,
-      password: req.body.password
+      password: bcrypt.hashSync(req.body.password, 10)
     };
     // console.log(userID, users);
     res.cookie("user_id", userID);
@@ -153,7 +154,8 @@ app.post("/login", (req, res) => {
   }
   for (let key of Object.keys(users)) {
     if (users[key].email === req.body.email) {
-      if (users[key].password === req.body.password) {
+      if (bcrypt.compareSync(req.body.password, users[key].password)) {
+        console.log(users[key].password);
         res.cookie("user_id", users[key].id);
         res.redirect(`/urls`);
       } else {
