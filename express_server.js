@@ -80,9 +80,9 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   let userID = generateRandomString();
   if (!req.body.email || !req.body.password) {
-    res.send("Error: 400");
+    res.send("Error 400: Email and password fields cannot be empty");
   } else if (emailExists(req)) {
-    res.send("Error: 400");
+    res.send("Error 400: Account already exists");
   } else {
     users[userID] = {
       id: userID,
@@ -103,8 +103,19 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
+  if(!emailExists(req)){
+    res.send("Error 403: User account does not exist");
+  }
+  for(let key of Object.keys(users)){
+    if(users[key].email === req.body.email){
+      if(users[key].password === req.body.password){
+        res.cookie("user_id", users[key].id);
+        res.redirect("/urls");
+      }else{
+        res.send("Error 403: Password is incorrect");
+      }
+    }
+  }
 });
 
 app.post("/logout", (req, res) => {
