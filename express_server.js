@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const express = require("express");
-const getUserURLs = require("./helpers");
+const { getUserURLs, generateRandomString } = require("./helpers.js");
 const app = express();
 const PORT = 8080;
 
@@ -14,9 +14,7 @@ app.use(cookieSession({
   keys: ["key"]
 }));
 
-const generateRandomString = function() {
-  return Math.random().toString(36).substr(2, 6);
-};
+
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
@@ -46,7 +44,7 @@ const userDatabase = {
 };
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const userURLs = getUserURLs(req.session.user_id, urlDatabase);
+  const userURLs = getUserURLs(req.session.user_id, urlDatabase, userDatabase);
   const toDelete = userURLs[req.params.shortURL];
 
   if (toDelete) {
@@ -69,7 +67,7 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const urlsToDisplay = getUserURLs(req.session.user_id, urlDatabase);
+  const urlsToDisplay = getUserURLs(req.session.user_id, urlDatabase, userDatabase);
   let templateVars = {
     user: userDatabase[req.session.user_id],
     urls: urlsToDisplay
@@ -133,6 +131,9 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  if(req.session.user_id){
+    res.redirect("/urls");
+  }
   let templateVars = {
     user: userDatabase[req.session.user_id]
   };

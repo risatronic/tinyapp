@@ -12,8 +12,9 @@
       </div>
     </div>
     <% if (!user){ %>
-    <button><a href="/login">Log In</a></button>
-    <button><a href="/register">Register</a></button>
+    <button><a href="/login" style="color: black">Log In</a></button>
+    <div style="width:5px; height:auto; display:inline-block;"></div>
+    <button><a href="/register" style="color: black">Register</a></button>
     <% } else { %>
     <form method=POST action="/logout">
       <p>

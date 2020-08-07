@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const getUserURLs = require('../helpers.js');
+const { getUserURLs } = require('../helpers.js');
 
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
@@ -54,7 +54,7 @@ describe('userDatabase.emailExists', function() {
 describe('getUserURLs', function() {
   it('should return an object containing URLs belonging to user ID if they exist', function() {
     const id = "userRandomID";
-    const result = getUserURLs(id, urlDatabase);
+    const result = getUserURLs(id, urlDatabase, userDatabase);
     const expectedOutput = {
       "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
       "bqM7a3": { longURL: "http://www.neopets.com", userID: "userRandomID" },
@@ -65,32 +65,30 @@ describe('getUserURLs', function() {
   
   it('should return {} for a user that exists but is not associated with any URLs', function() {
     const id = "u3id";
-    const result = getUserURLs(id, urlDatabase);
+    const result = getUserURLs(id, urlDatabase, userDatabase);
     const expectedOutput = {};
 
     assert.deepEqual(result, expectedOutput);
   });
 
-  it('should return {} for a user that does not exist', function() {
+  it('should return undefined for a user that does not exist', function() {
     const id = "jeremiah";
-    const result = getUserURLs(id, urlDatabase);
-    const expectedOutput = {};
+    const result = getUserURLs(id, urlDatabase, userDatabase);
 
-    assert.deepEqual(result, expectedOutput);
+    assert.equal(result, undefined);
   });
 
-  it('should return {} for a database that does not exist', function() {
+  it('should return undefined for a database that does not exist', function() {
     const id = "u3id";
-    const database = {};
-    const result = getUserURLs(id, database);
-    const expectedOutput = {};
+    let database;
+    const result = getUserURLs(id, database, userDatabase);
 
-    assert.deepEqual(result, expectedOutput);
+    assert.deepEqual(result, undefined);
   });
 
   it('should return undefined if user ID is empty', function() {
     const id = "";
-    const result = getUserURLs(id, urlDatabase);
+    const result = getUserURLs(id, urlDatabase, userDatabase);
 
     assert.equal(result, undefined);
   });
@@ -98,7 +96,7 @@ describe('getUserURLs', function() {
   it('should return undefined if database is empty', function() {
     const id = "userRandomID";
     const database = "";
-    const result = getUserURLs(id, database);
+    const result = getUserURLs(id, database, userDatabase);
 
     assert.equal(result, undefined);
   });
