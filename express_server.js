@@ -48,8 +48,18 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   if (toDelete) {
     delete urlDatabase[req.params.shortURL];
   }
-
   res.redirect('/urls');
+});
+
+app.get('/u/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
+
+  if (!urlDatabase[shortURL]) {
+    req.session.message = 'Error: Shortened URL does not exist';
+    res.redirect('/urls');
+  }
+  const longURL = urlDatabase[req.params.shortURL].longURL;
+  res.redirect(longURL);
 });
 
 app.get('/urls/new', (req, res) => {
@@ -60,30 +70,13 @@ app.get('/urls/new', (req, res) => {
     let templateVars = {
       user: userDatabase[req.session.user_id]
     };
-
     res.render('urls_new', templateVars);
-  }
-});
-
-app.get('/urls', (req, res) => {
-  const urlsToDisplay = getUserURLs(req.session.user_id, urlDatabase, userDatabase);
-  let templateVars = {
-    user: userDatabase[req.session.user_id],
-    urls: urlsToDisplay,
-    message: req.session.message
-  };
-  req.session.message = null;
-
-  if (!templateVars.user) {
-    req.session.message = 'Must be logged in to see URLs';
-    res.redirect('/login');
-  } else {
-    res.render('urls_index', templateVars);
   }
 });
 
 app.get('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
+
   if (!urlDatabase[shortURL]) {
     req.session.message = 'Error 404: URL does not exist';
     res.redirect('/urls');
@@ -91,18 +84,19 @@ app.get('/urls/:shortURL', (req, res) => {
     req.session.message = 'Error: URL does not belong to current user';
     res.redirect('/urls');
   }
+
   const longURL = urlDatabase[req.params.shortURL].longURL;
   let templateVars = {
     user: userDatabase[req.session.user_id],
     shortURL,
     longURL
   };
-
   res.render('urls_show', templateVars);
 });
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
+
   if (!req.session.user_id) {
     req.session.message = 'Error: Must be logged in to edit URLS';
     res.redirect('/login');
@@ -115,14 +109,33 @@ app.post('/urls/:shortURL', (req, res) => {
   }
 });
 
-app.get('/u/:shortURL', (req, res) => {
-  const shortURL = req.params.shortURL;
-  if (!urlDatabase[shortURL]) {
-    req.session.message = 'Error: Shortened URL does not exist';
-    res.redirect('/urls');
+app.get('/urls', (req, res) => {
+  const urlsToDisplay = getUserURLs(req.session.user_id, urlDatabase, userDatabase);
+  let templateVars = {
+    user: userDatabase[req.session.user_id],
+    urls: urlsToDisplay,
+    message: req.session.message
+  };
+
+  req.session.message = null; //clear message after pop-up on redirect
+
+  if (!templateVars.user) {
+    req.session.message = 'Must be logged in to see URLs';
+    res.redirect('/login');
+  } else {
+    res.render('urls_index', templateVars);
   }
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+});
+
+app.post('/urls', (req, res) => {
+  if (!req.session.user_id) {
+    req.session.message = 'Error: Must be logged in to create new URL';
+    res.redirect('/login');
+  } else {
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id };
+    res.redirect(`/urls`);
+  }
 });
 
 app.get('/register', (req, res) => {
@@ -138,6 +151,7 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   const userID = generateRandomString();
+
   if (!req.body.email || !req.body.password) {
     req.session.message = 'Error: Email and password fields cannot be empty';
     res.redirect('/register');
@@ -151,14 +165,12 @@ app.post('/register', (req, res) => {
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 10)
     };
-    // console.log(userID, users);
     req.session.user_id = userID;
     res.redirect('/urls');
   }
 });
 
 app.get('/login', (req, res) => {
-
   if (req.session.user_id) {
     req.session.message = 'User is already logged in';
     res.redirect('/urls');
@@ -167,13 +179,14 @@ app.get('/login', (req, res) => {
       user: userDatabase[req.session.user_id],
       message: req.session.message
     };
-    req.session.message = null;
+    req.session.message = null; //clear message after pop-up on redirect
     res.render('urls_login', templateVars);
   }
 });
 
 app.post('/login', (req, res) => {
-  req.session.message = null;
+  req.session.message = null; //clear message after pop-up on redirect
+
   if (!userDatabase.emailExists(req.body.email)) {
     req.session.message = 'Error: User account does not exist';
     res.redirect('/login');
@@ -194,17 +207,6 @@ app.post('/login', (req, res) => {
 app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/login');
-});
-
-app.post('/urls', (req, res) => {
-  if (!req.session.user_id) {
-    req.session.message = 'Error: Must be logged in to create new URL';
-    res.redirect('/login');
-  } else {
-    const shortURL = generateRandomString();
-    urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user_id };
-    res.redirect(`/urls`);
-  }
 });
 
 app.get('/', (req, res) => {
